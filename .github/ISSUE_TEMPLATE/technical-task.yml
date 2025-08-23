@@ -1,0 +1,8 @@
+name: Technical Task
+description: "General task that needs to be done and don't necessarily have to involve coding"
+title: "[CHORE]"
+labels: ["task"]
+body:
+  - type: textarea
+    attributes:
+      label: What needs to be done
