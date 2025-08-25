@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
+import Waveform from "./Waveform";
 
 // Add type for recordings
 interface Recording {
@@ -11,6 +12,7 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [microphoneError, setMicrophoneError] = useState<string | null>(null);
   const mediaStreamRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<number | null>(null);
 
@@ -49,6 +51,7 @@ function App() {
   };
 
   const startRecording = async () => {
+    setMicrophoneError(null); // Clear previous errors
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -70,11 +73,9 @@ function App() {
       }, 1000);
 
       console.log("Recording started...");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error accessing microphone:", error);
-      alert(
-        "Could not access microphone. Please ensure it is connected and permissions are granted."
-      );
+      setMicrophoneError(error.message); // Set error message
     }
   };
 
@@ -101,6 +102,16 @@ function App() {
   // Format timestamp
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleString();
+  };
+
+  const formatRecordingTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (num: number) => num.toString().padStart(2, "0");
+
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
   const handleGetAnalysis = async (rec: Recording) => {
@@ -131,20 +142,58 @@ function App() {
   return (
     <>
       <section>
-        <div>
-          <h2>Hi, welcome to Filler, your personal speech coach</h2>
-          <p>We are going to help you become better in your future presentation</p>
-          <p>Click on the button to make a voice record of yourself making a presentation</p>
+        <div className="flex flex-col gap-6">
+          <h1>
+            <p className="text-6xl font-bold">Erm..Filler Words?</p>
+          </h1>
+          <div>
+            <p>Hi, welcome to Filler, your personal speech coach</p>
+            <p>We are going to help you become better in your future presentation</p>
+            <p>Click on the button to make a voice record of yourself making a presentation</p>
+          </div>
+          <div className="flex justify-center">
+            <img
+              src="../record.jpg"
+              width={300}
+              height={300}
+              alt="sketch of a cassette player"
+              className="object-contain"
+            />
+          </div>
         </div>
 
-        <div>
-          <button
-            onClick={handleStartRecording}
-            className="py-2 px-4 bg-slate-300 mt-6 rounded-3xl"
+        <div className="flex justify-center gap-6 mt-6">
+          <div
+            className={`flex flex-row justify-center items-center  ${
+              isRecording ? "bg-blue-100" : "bg-blue-600 text-white"
+            }  w-fit rounded-full p-2 gap-4 border border-blue-200`}
           >
-            {isRecording ? "Stop Recording" : "Click to start recording"}
-          </button>
-          {isRecording && <span style={{ marginLeft: "10px" }}>Recording: {recordingTime}s</span>}
+            {isRecording && (
+              <div className="flex gap-4 items-center">
+                <Waveform recordingTime={recordingTime} />
+                <span>{formatRecordingTime(recordingTime)}</span>
+              </div>
+            )}
+            <button onClick={handleStartRecording} className=" flex ">
+              {isRecording ? (
+                <div className="flex bg-blue-600 p-2 rounded-full gap-2">
+                  <div className="flex item-center justify-center">
+                    <span className="recording-icon bg-white w-4 h-4 rounded-full flex justify-center items-center [transform:translate(0px,2px)] "></span>
+                  </div>
+                  <p className=" w-full flex text-white font-semibold text-sm">Stop Recording</p>
+                </div>
+              ) : (
+                <p className="p-2 font-semibold "> Start recording</p>
+              )}
+            </button>
+
+            {microphoneError && <p style={{ color: "red" }}>{microphoneError}</p>}
+          </div>
+          <div>
+            <button className="flex flex-row justify-center items-center bg-orange-100 w-fit rounded-full p-4 gap-4 border border-orange-400">
+              <p className="font-semibold text-orange-500">Upload Audio</p>
+            </button>
+          </div>
         </div>
 
         {/* Recordings List */}
