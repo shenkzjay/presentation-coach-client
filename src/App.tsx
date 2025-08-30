@@ -16,6 +16,7 @@ function App() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [microphoneError, setMicrophoneError] = useState<string | null>(null);
   const [cassetteSpin, setCassetteSpin] = useState<boolean>(false);
+  const [fileUpload, setFileUpload] = useState<File | null>(null);
   const mediaStreamRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<number | null>(null);
 
@@ -104,6 +105,15 @@ function App() {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    const files = e.currentTarget.files;
+
+    if (files && files.length > 0) {
+      setFileUpload(files[0]);
+    }
+  };
+
   // Format timestamp
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleString();
@@ -119,38 +129,58 @@ function App() {
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
-  const handleGetAnalysis = async (rec: Recording) => {
-    //convert data url to blob
-    const response = await fetch(rec.audioDataUrl);
-    const audioBlob = await response.blob();
-
-    //create a form data and append the audio file
+  const prepareAudioFormData = async (
+    rec: Recording | null,
+    uploadedFile: File | null
+  ): Promise<FormData> => {
     const formData = new FormData();
 
-    formData.append("audio_file", audioBlob, `recording_${rec.timestamp}.webm`);
-
-    const apiResponse = await fetch("http://localhost:8000/analyze-audio", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (apiResponse.ok) {
-      const result = await apiResponse.json();
-
-      console.log("Analysis successfull", result);
+    if (uploadedFile) {
+      formData.append("audio_file", uploadedFile);
+      console.log({ uploadedFile });
+    } else if (rec) {
+      //convert data url to blob
+      const response = await fetch(rec.audioDataUrl);
+      const audioBlob = await response.blob();
+      formData.append("audio_file", audioBlob, `recording_${rec.timestamp}.webm`);
     } else {
-      console.error("API Error:", apiResponse.statusText);
+      throw new Error("No audio source provided");
+    }
+
+    return formData;
+  };
+
+  const handleGetAnalysis = async (rec: Recording | null) => {
+    try {
+      const formData = await prepareAudioFormData(rec, fileUpload);
+
+      const apiResponse = await fetch("http://localhost:8000/analyze-audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (apiResponse.ok) {
+        const result = await apiResponse.json();
+
+        console.log("Analysis successfull", result);
+      } else {
+        console.error("API Error:", apiResponse.statusText);
+        throw new Error(`API Error: ${apiResponse.statusText}`);
+      }
+    } catch (error) {
+      console.error("Analysis failed:", error);
       alert("Failed to get filler word analysis.");
+      throw error;
     }
   };
 
   return (
-    <>
-      <section className="container mx-auto">
+    <div className="wrapper">
+      <section className="container mx-auto h-screen">
         <Navbar />
-        <div className="flex gap-40 mx-auto w-full">
+        <div className="flex gap-40 w-full max-h-[90vh] ">
           {/* right section */}
-          <section className="mt-6 w-1/2">
+          <section className="mt-6 w-1/2 min-h-full flex flex-col justify-center">
             <div className="flex flex-col gap-6">
               <div className="grid gap-4">
                 <p className="text-6xl font-bold">
@@ -205,17 +235,43 @@ function App() {
 
                 {microphoneError && <p style={{ color: "red" }}>{microphoneError}</p>}
               </div>
-              <div>
-                <button className="flex flex-row justify-center items-center bg-orange-100 w-fit rounded-full p-4 gap-4 border border-orange-400">
-                  <p className="font-semibold text-orange-500">Upload Audio</p>
-                </button>
+              <div className=" upload-wrapper  relative">
+                <label className="sr-only">Upload file</label>
+                <input
+                  required
+                  onChange={(e) => handleFileUpload(e)}
+                  type="file"
+                  accept="audio/*, video/*"
+                  name="uploadfile"
+                  id="uploadfile"
+                  className=" absolute top-0 left-0 right-0 bottom-0 opacity-0 cursor-pointer"
+                />
+                <div className="uploadzone ">
+                  <div className="default border p-2 rounded-full border-orange-400 bg-orange-100">
+                    <button type="button" className=" font-semibold p-2 text-orange-500">
+                      Browse Files
+                    </button>
+                  </div>
+                  <div className="success text-buttongray text-sm  gap-4 flex flex-row bg-orange-100 items-center p-2 rounded-full ">
+                    <p className="text-orange-600 italic">{`${fileUpload?.name?.slice(
+                      0,
+                      14
+                    )}...`}</p>
+                    <button
+                      onClick={() => handleGetAnalysis(null)}
+                      className="p-3 z-20 cursor-pointer bg-orange-500 text-white font-semibold rounded-full"
+                    >
+                      Analyze upload
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
-          <section className="w-1/2 ">
+          <section className="w-1/2 min-h-full">
             {/* Recordings List */}
-            <div className="mt-6 bg-slate-100 h-full rounded-2xl p-6">
-              <h3>Your Recordings</h3>
+            <div className="mt-6 bg-slate-100 h-full  rounded-2xl p-6">
+              <h3 className="mb-4">Your Recordings</h3>
               {recordings.length === 0 ? (
                 <div className="flex flex-col justify-center items-center h-full gap-6">
                   <p>No recordings yet!</p>
@@ -225,35 +281,26 @@ function App() {
                   </p>
                 </div>
               ) : (
-                <ul style={{ listStyle: "none", padding: 0 }}>
+                <ul className="list-none  h-[95%] overflow-y-scroll flex flex-col gap-4">
                   {recordings.map((rec, index) => (
-                    <li
-                      key={index}
-                      style={{
-                        margin: "10px 0",
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "8px",
-                      }}
-                    >
+                    <li key={index} className="bg-white p-4 rounded-2xl ">
                       <div>
                         <strong>Recording {recordings.length - index}</strong> -{" "}
                         {formatTime(rec.timestamp)}
                       </div>
-                      <audio
-                        src={rec.audioDataUrl}
-                        controls
-                        style={{ marginTop: "10px", width: "100%" }}
-                      />
-                      <div className="flex gap-4 mt-6 text-sm">
-                        <button
-                          onClick={() => handleGetAnalysis(rec)}
-                          className="bg-blue-100 px-4 py-2 rounded-full"
-                        >
-                          <p className="text-blue-600">Get analysis for filler words</p>
-                        </button>
-                        <button>delete</button>
-                        <button>export</button>
+                      <div className="flex items-center gap-4 mt-4">
+                        <audio src={rec.audioDataUrl} controls />
+
+                        <div className="flex gap-4 text-sm">
+                          <button
+                            onClick={() => handleGetAnalysis(rec)}
+                            className=" bg-blue-50 px-4 py-2 rounded-full outline-2 outline-blue-400"
+                          >
+                            <p className="text-blue-600 font-semibold">Analyze</p>
+                          </button>
+                          <button>delete</button>
+                          <button>export</button>
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -263,7 +310,7 @@ function App() {
           </section>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

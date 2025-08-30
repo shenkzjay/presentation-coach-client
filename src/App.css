@@ -99,6 +99,29 @@
   transform-box: fill-box;
 }
 
+.upload-wrapper .uploadzone .success {
+  display: none;
+}
+
+.upload-wrapper input[type="file"]:valid + .uploadzone {
+  border-color: #1abc9c;
+}
+
+.upload-wrapper input[type="file"]:valid + .uploadzone .success {
+  display: flex;
+}
+
+.upload-wrapper input[type="file"]:valid + .uploadzone .default {
+  display: none;
+}
+
+.wrapper {
+  width: 100%;
+  height: 100%;
+
+  background-repeat: no-repeat;
+}
+
 @keyframes cassette {
   to {
     transform: rotate(360deg);
