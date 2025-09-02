@@ -3,11 +3,43 @@ import "./App.css";
 import Waveform from "./Waveform";
 import { Navbar } from "./components/navbar/navbar";
 import { Cassette } from "./assets/svg/cassette";
+import { DialogModal } from "./components/dialog";
 
 // Add type for recordings
 interface Recording {
   audioDataUrl: string;
   timestamp: number;
+}
+
+interface AnalyzedAudioResult {
+  status: string;
+  ai_suggestions: string;
+  analysis: {
+    filler_word_count: Object;
+    filler_word_percentage: string;
+    total_filler_words: number;
+    full_transcript: string;
+    total_word: number;
+  };
+  db_entry_id: number;
+  silence_analysis: {
+    all_pauses: [
+      {
+        start: number;
+        stop: number;
+        duration: number;
+      }
+    ];
+    longest_pause_seconds: number;
+    number_of_long_pauses: number;
+    pauses_over_2_second: [
+      {
+        start: number;
+        stop: number;
+        duration: number;
+      }
+    ];
+  };
 }
 
 function App() {
@@ -19,20 +51,12 @@ function App() {
   const [fileUpload, setFileUpload] = useState<File | null>(null);
   const mediaStreamRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const analysisRefModal = useRef<HTMLDialogElement | null>(null);
+  const [analyzeAudioResult, setAnalyzeAudioResult] = useState<AnalyzedAudioResult | null>(null);
+  const [isloading, setIsLoading] = useState<boolean>(false);
 
   // Load recordings from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("recordings");
-    if (saved) {
-      const parsed: Recording[] = JSON.parse(saved);
-      setRecordings(parsed);
-    }
-
-    // Cleanup: revoke object URLs on unmount
-    return () => {
-      recordings.forEach((rec) => URL.revokeObjectURL(rec.audioDataUrl));
-    };
-  }, []);
+  useEffect(() => {}, []);
 
   // Save new recording and update state
   const saveRecording = (audioBlob: Blob) => {
@@ -87,6 +111,10 @@ function App() {
   const stopRecording = () => {
     if (mediaStreamRecorderRef.current && mediaStreamRecorderRef.current.state !== "inactive") {
       mediaStreamRecorderRef.current.stop();
+
+      //stop all stream track
+      const stream = mediaStreamRecorderRef.current.stream;
+      stream.getTracks().forEach((track) => track.stop());
       setIsRecording(false);
       setCassetteSpin(false);
       if (intervalRef.current) {
@@ -151,6 +179,10 @@ function App() {
   };
 
   const handleGetAnalysis = async (rec: Recording | null) => {
+    setIsLoading(true);
+    setTimeout(() => {
+      analysisRefModal.current?.showModal();
+    }, 100);
     try {
       const formData = await prepareAudioFormData(rec, fileUpload);
 
@@ -161,16 +193,33 @@ function App() {
 
       if (apiResponse.ok) {
         const result = await apiResponse.json();
+        setIsLoading(false);
+        setAnalyzeAudioResult(result);
 
         console.log("Analysis successfull", result);
       } else {
         console.error("API Error:", apiResponse.statusText);
+
+        setIsLoading(false);
         throw new Error(`API Error: ${apiResponse.statusText}`);
       }
     } catch (error) {
       console.error("Analysis failed:", error);
-      alert("Failed to get filler word analysis.");
+      setIsLoading(false);
+      analysisRefModal.current?.close();
       throw error;
+    }
+  };
+
+  const handleOpenDialog = () => {
+    if (analysisRefModal.current) {
+      analysisRefModal.current.showModal();
+    }
+  };
+
+  const handleCloseAudioAnalyisModal = () => {
+    if (analysisRefModal.current) {
+      analysisRefModal.current.close();
     }
   };
 
@@ -184,8 +233,26 @@ function App() {
             <div className="flex flex-col gap-6">
               <div className="grid gap-4">
                 <p className="text-6xl font-bold">
-                  Lose the <span className="text-title-red">“ums”</span> and{" "}
-                  <span className="text-title-green">Present</span> like a pro!
+                  Lose the{" "}
+                  <span className="relative bg-white slide-text">
+                    {["'ums'", "'erms'", "'uh'"].map((word, index) => (
+                      <span
+                        key={index}
+                        className={`absolute top-0 left-0  bg-white w-full ${
+                          index === 0
+                            ? "text-title-red"
+                            : index === 1
+                            ? "text-title-green"
+                            : "text-blue-400"
+                        }`}
+                        style={{ animationDelay: `calc(${index}s * 2)` }}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </span>{" "}
+                  <br />
+                  and <span className="">Present</span> like a pro!
                 </p>
                 <p>Make smooth presentations without using filler word</p>
                 <p>
@@ -195,13 +262,6 @@ function App() {
               </div>
 
               <div className="flex justify-center w-2/3">
-                {/* <img
-                  src="../record.jpg"
-                  width={300}
-                  height={300}
-                  alt="sketch of a cassette player"
-                  className="object-contain legwork"
-                /> */}
                 <Cassette cassetteSpin={cassetteSpin} />
               </div>
             </div>
@@ -309,6 +369,29 @@ function App() {
             </div>
           </section>
         </div>
+
+        <button onClick={handleOpenDialog}>open sesame</button>
+        <DialogModal ref={analysisRefModal} handleCloseModal={handleCloseAudioAnalyisModal}>
+          <div className="">
+            {isloading && <div className="">loading my add off</div>}
+            {analyzeAudioResult && (
+              <div className="">
+                <div>
+                  <button onClick={handleCloseAudioAnalyisModal}>close</button>
+                </div>
+                <h3>Analysis Result</h3>
+                <p>AI Suggestions: {analyzeAudioResult.ai_suggestions}</p>
+                <p>Full Transcript: {analyzeAudioResult.analysis.full_transcript}</p>
+                <p>Total Filler Words: {analyzeAudioResult.analysis.total_filler_words}</p>
+                <p>Filler Word Percentage: {analyzeAudioResult.analysis.filler_word_percentage}</p>
+                <p>
+                  Number of Long Pauses: {analyzeAudioResult.silence_analysis.number_of_long_pauses}
+                </p>
+              </div>
+            )}
+            {!isloading && !analyzeAudioResult && <p>No analysis yet.</p>}
+          </div>
+        </DialogModal>
       </section>
     </div>
   );

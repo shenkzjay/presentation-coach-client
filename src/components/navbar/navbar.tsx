@@ -5,10 +5,10 @@ export function Navbar() {
         <li>
           <a>fill_r</a>
         </li>
-        <li>
+        <li className="flex gap-4">
           <a>about</a>
           <a>uploads</a>
-          <a>pricing</a>
+          <a href="/pages/analysis">analysis</a>
         </li>
         <li>
           <a>Log in</a>

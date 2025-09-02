@@ -121,9 +121,53 @@
 
   background-repeat: no-repeat;
 }
+.slide-text {
+  position: relative;
+  display: inline-block;
+  width: 15rem;
+  height: 3.3rem;
+  overflow: hidden;
+
+  background-color: white;
+}
+
+.slide-text span {
+  animation: slide-up 6s linear infinite;
+}
+
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
 
 @keyframes cassette {
   to {
     transform: rotate(360deg);
   }
+}
+
+dialog {
+  margin: auto;
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
