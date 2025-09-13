@@ -59,7 +59,7 @@
 .cls-3,
 .cls-4,
 .cls-5 {
-  stroke: #211e1e;
+  stroke: white;
 }
 .cls-1,
 .cls-2,
@@ -80,7 +80,7 @@
   stroke-width: 2px;
 }
 .cls-3 {
-  fill: #211e1e;
+  fill: white;
 }
 .cls-4 {
   stroke-width: 3px;
@@ -89,8 +89,8 @@
   fill: #fdfdfd;
 }
 .cls-6 {
-  fill: red;
-  stroke: red;
+  fill: greenyellow;
+  stroke: greenyellow;
 }
 
 .cls-6.active {
@@ -116,15 +116,60 @@
 }
 
 .wrapper {
+  z-index: 1;
+  background: linear-gradient(#333, #333);
+  position: relative;
+}
+
+.stripe1,
+.stripe2 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: "";
   width: 100%;
   height: 100%;
-
-  background-repeat: no-repeat;
 }
+
+.stripe1 {
+  background: linear-gradient(170deg, transparent 1%, 49%, #333 5% 50%, transparent 50%) 0 -26% / 100%
+      50%,
+    linear-gradient(170deg, transparent 1%, 49%, #333 5% 50%, transparent 50%) 0 11% / 100% 50%,
+    linear-gradient(170deg, transparent 1%, 30%, greenyellow 5% 50%, transparent 50%) 0 0 / 100% 60%;
+  background-repeat: no-repeat;
+  z-index: -6;
+}
+
+.stripe2 {
+  background: linear-gradient(200deg, transparent 1%, 40%, greenyellow 5% 50%, transparent 50%) 0 0 /
+    100% 100%;
+  background-repeat: no-repeat;
+  z-index: -7;
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(30px);
+  background-color: rgba(241, 245, 249, 0.2);
+  border: 1px solid rgba(241, 245, 249, 0.3);
+}
+
+@media (max-width: 768px) {
+  .App svg text {
+    /* font-size: clamp(18px, 2vw, 24px) !important; */
+    z-index: -5;
+  }
+}
+
+@media (max-width: 480px) {
+  .App svg {
+    transform-origin: top center;
+  }
+}
+
 .slide-text {
   position: relative;
   display: inline-block;
-  width: 15rem;
+  width: 12rem;
   height: 3.3rem;
   overflow: hidden;
 
@@ -170,4 +215,27 @@ dialog {
   max-height: 90vh;
   border-radius: 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* firefox */
+@supports (scrollbar-color: auto) {
+  .scroll-box {
+    scrollbar-color: aquamarine cornflowerblue;
+    scrollbar-width: thin;
+  }
+}
+
+/* webkit safari, Chrome, Edge */
+@supports selector(::-webkit-scrollbar) {
+  .scroll-box::-webkit-scrollbar {
+    background: transparent;
+    width: 5px;
+  }
+  .scroll-box::-webkit-scrollbar-thumb {
+    background: greenyellow;
+    border-radius: 8px;
+  }
+  .scroll-box::-webkit-scrollbar {
+    scrollbar-width: thin;
+  }
 }

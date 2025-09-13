@@ -2,9 +2,12 @@ interface DialogPropTypes {
   children: React.ReactNode;
   ref: React.Ref<HTMLDialogElement | null>;
   handleCloseModal: () => void;
+  isloading: boolean;
 }
 
-export function DialogModal({ children, ref, handleCloseModal }: DialogPropTypes) {
+export function DialogModal({ children, ref, handleCloseModal, isloading }: DialogPropTypes) {
+  console.log({ isloading });
+
   return (
     <dialog ref={ref} className="backdrop-blur-3xl backdrop:bg-black backdrop:opacity-40">
       <div
@@ -14,12 +17,14 @@ export function DialogModal({ children, ref, handleCloseModal }: DialogPropTypes
         }}
       >
         <div className="flex justify-end">
-          <button
-            onClick={handleCloseModal}
-            className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
-          >
-            Close
-          </button>
+          {!isloading && (
+            <button
+              onClick={handleCloseModal}
+              className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+            >
+              Close
+            </button>
+          )}
         </div>
         <div className="mt-4 text-left">{children}</div>
       </div>
