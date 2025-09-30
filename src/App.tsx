@@ -244,22 +244,20 @@ function App() {
   return (
     <section className="relative w-full h-full">
       <div className="wrapper">
-        <span className="stripe1"></span>
-        <span className="stripe2"></span>
+        <span className="stripe"></span>
+        <span className="stripe"></span>
         <section className="container mx-auto h-screen">
           <Navbar />
-          <div className="flex gap-40 w-full max-h-[90vh] ">
-            {/* right section */}
-            {/* <section className="mt-6 w-1/2 min-h-full flex flex-col justify-center">
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-4">
-                <p className="text-6xl font-bold">
+          <div className="flex    ">
+            <section className="w-1/2 flex flex-col gap-6">
+              <div className="grid gap-4 w-full text-white">
+                <p className="text-6xl font-bold ">
                   Lose the{" "}
-                  <span className="relative bg-white slide-text">
+                  <span className="relative  slide-text ">
                     {["'ums'", "'erms'", "'uh'"].map((word, index) => (
                       <span
                         key={index}
-                        className={`absolute top-0 left-0  bg-white w-full ${
+                        className={`absolute top-0 left-0 w-full bg-[#333]  ${
                           index === 0
                             ? "text-title-red"
                             : index === 1
@@ -273,239 +271,148 @@ function App() {
                     ))}
                   </span>{" "}
                   <br />
-                  and <span className="">Present</span> like <br />a pro!
+                  and <span className="">present</span> like a pro!
                 </p>
-                <p>Make smooth presentations without using filler word</p>
-                <p>
-                  Record or upload a presentation and let us analyse and make suggestions on how you
-                  can improve and make presentations like a pro
-                </p>
+                <p>Practice your presentations without using filler word</p>
               </div>
 
-              <div className="flex justify-center w-2/3">
+              <DialogModal
+                ref={analysisRefModal}
+                handleCloseModal={handleCloseAudioAnalyisModal}
+                isloading={isloading}
+              >
+                <div className="">
+                  {isloading && <div className="">loading my add off</div>}
+                  {analyzeAudioResult && (
+                    <div className="">
+                      <h3>Analysis Result</h3>
+                      <p>AI Suggestions: {analyzeAudioResult.ai_suggestions}</p>
+                      <p>Full Transcript: {analyzeAudioResult.analysis.full_transcript}</p>
+                      <p>Total Filler Words: {analyzeAudioResult.analysis.total_filler_words}</p>
+                      <p>
+                        Filler Word Percentage: {analyzeAudioResult.analysis.filler_word_percentage}
+                      </p>
+                      <p>
+                        Number of Long Pauses:{" "}
+                        {analyzeAudioResult.silence_analysis.number_of_long_pauses}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </DialogModal>
+
+              <div className=" w-[30vw]">
                 <Cassette cassetteSpin={cassetteSpin} />
               </div>
-            </div>
 
-            <div className="flex  gap-6 mt-6">
-              <div
-                className={`flex flex-row   ${
-                  isRecording ? "bg-blue-100" : "bg-blue-600 text-white"
-                }  w-fit rounded-full p-2 gap-4 border border-blue-200`}
-              >
-                {isRecording && (
-                  <div className="flex gap-4 items-center">
-                    <Waveform recordingTime={recordingTime} />
-                    <span>{formatRecordingTime(recordingTime)}</span>
-                  </div>
-                )}
-                <button onClick={handleStartRecording} className=" flex ">
-                  {isRecording ? (
-                    <div className="flex bg-blue-600 p-2 rounded-full gap-2">
-                      <div className="flex item-center justify-center">
-                        <span className="recording-icon bg-white w-4 h-4 rounded-full flex justify-center items-center [transform:translate(0px,2px)] "></span>
-                      </div>
-                      <p className=" w-full flex text-white font-semibold text-sm">Stop Recording</p>
+              <div className="flex gap-6  ">
+                <div
+                  className={`flex flex-row items-center   ${
+                    isRecording ? "bg-blue-100" : "bg-blue-500  text-white"
+                  }  w-fit rounded-full p-2 gap-4 border-2 border-blue-200`}
+                >
+                  {isRecording && (
+                    <div className="flex gap-4 items-center">
+                      <Waveform recordingTime={recordingTime} />
+                      <span>{formatRecordingTime(recordingTime)}</span>
                     </div>
-                  ) : (
-                    <p className="p-2 font-semibold "> Click to start recording</p>
                   )}
-                </button>
+                  <button onClick={handleStartRecording} className="flex relative z-20">
+                    {isRecording ? (
+                      <div className="flex bg-blue-600 p-2.5 rounded-full gap-2">
+                        <div className="flex item-center justify-center">
+                          <span className="recording-icon bg-white w-4 h-4 rounded-full flex justify-center items-center [transform:translate(0px,2px)] "></span>
+                        </div>
+                        <p className=" w-full flex text-white font-semibold text-sm">
+                          Stop Recording
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="p-2 font-semibold">Click to start recording</p>
+                    )}
+                  </button>
 
-                {microphoneError && <p style={{ color: "red" }}>{microphoneError}</p>}
-              </div>
-              <div className=" upload-wrapper  relative">
-                <label className="sr-only">Upload file</label>
-                <input
-                  required
-                  onChange={(e) => handleFileUpload(e)}
-                  type="file"
-                  accept="audio/*, video/*"
-                  name="uploadfile"
-                  id="uploadfile"
-                  className=" absolute top-0 left-0 right-0 bottom-0 opacity-0 cursor-pointer"
-                />
-                <div className="uploadzone ">
-                  <div className="default border p-2 rounded-full border-orange-400 bg-orange-100">
-                    <button type="button" className=" font-semibold p-2 text-orange-500">
-                      Browse Files
-                    </button>
-                  </div>
-                  <div className="success text-buttongray text-sm  gap-4 flex flex-row bg-orange-100 items-center p-2 rounded-full ">
-                    <p className="text-orange-600 italic">{`${fileUpload?.name?.slice(
-                      0,
-                      14
-                    )}...`}</p>
-                    <button
-                      onClick={() => handleGetAnalysis(null)}
-                      className="p-3 z-20 cursor-pointer bg-orange-500 text-white font-semibold rounded-full"
-                    >
-                      Analyze upload
-                    </button>
+                  {microphoneError && <p style={{ color: "red" }}>{microphoneError}</p>}
+                </div>
+                <div className="upload-wrapper  relative">
+                  <label className="sr-only">Upload file</label>
+                  <input
+                    required
+                    onChange={(e) => handleFileUpload(e)}
+                    type="file"
+                    accept="audio/*, video/*"
+                    name="uploadfile"
+                    id="uploadfile"
+                    className=" absolute top-0 left-0 right-0 bottom-0 opacity-0 cursor-pointer"
+                  />
+                  <div className="uploadzone ">
+                    <div className="default border-2 p-2 rounded-full border-white bg-[#333]">
+                      <button type="button" className=" font-semibold p-2 text-white">
+                        Browse Files
+                      </button>
+                    </div>
+                    <div className="success text-buttongray text-sm  gap-4 flex flex-row bg-orange-100 items-center p-2 rounded-full ">
+                      <p className="text-orange-600 italic">{`${fileUpload?.name?.slice(
+                        0,
+                        14
+                      )}...`}</p>
+                      <button
+                        onClick={() => handleGetAnalysis(null)}
+                        className="p-3 z-20 cursor-pointer bg-orange-500 text-white font-semibold rounded-full"
+                      >
+                        Analyze upload
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </section> */}
+            </section>
+
+            <section className="w-1/2 h-auto absolute top-0 right-20 mt-6  ">
+              {recordings.length > 0 && (
+                <div
+                  className="absolute inset-0 backdrop-blur rounded-2xl bg-slate-100/20 border border-slate-100/30"
+                  aria-hidden="true"
+                ></div>
+              )}
+              {/* Recordings List */}
+              {recordings.length > 0 && (
+                <div className="h-full z-10  rounded-2xl p-6 text-black relative border border-slate-100">
+                  <h3 className="mb-4">Your Recordings</h3>
+
+                  <ul className="list-none h-[80vh] overflow-y-scroll flex flex-col gap-4 scroll-box">
+                    {recordings.map((rec, index) => (
+                      <li
+                        key={index}
+                        className="bg-white opacity-95 backdrop-blur p-4 rounded-2xl "
+                      >
+                        <div>
+                          <strong>Recording {recordings.length - index}</strong> -{" "}
+                          {formatTime(rec.timestamp)}
+                        </div>
+                        <div className="flex items-center gap-4 mt-4">
+                          <audio src={rec.audioDataUrl} controls />
+
+                          <div className="flex gap-4 text-sm">
+                            <button
+                              onClick={() => handleGetAnalysis(rec)}
+                              className=" bg-blue-50 px-4 py-2 rounded-full outline-2 outline-blue-400"
+                            >
+                              <p className="text-blue-600 font-semibold">Analyze</p>
+                            </button>
+                            <button>delete</button>
+                            <button>export</button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
           </div>
 
           {/* <button onClick={handleOpenDialog}>open sesame</button> */}
-          <DialogModal
-            ref={analysisRefModal}
-            handleCloseModal={handleCloseAudioAnalyisModal}
-            isloading={isloading}
-          >
-            <div className="">
-              {isloading && <div className="">loading my add off</div>}
-              {analyzeAudioResult && (
-                <div className="">
-                  <h3>Analysis Result</h3>
-                  <p>AI Suggestions: {analyzeAudioResult.ai_suggestions}</p>
-                  <p>Full Transcript: {analyzeAudioResult.analysis.full_transcript}</p>
-                  <p>Total Filler Words: {analyzeAudioResult.analysis.total_filler_words}</p>
-                  <p>
-                    Filler Word Percentage: {analyzeAudioResult.analysis.filler_word_percentage}
-                  </p>
-                  <p>
-                    Number of Long Pauses:{" "}
-                    {analyzeAudioResult.silence_analysis.number_of_long_pauses}
-                  </p>
-                </div>
-              )}
-            </div>
-          </DialogModal>
-          <section className="z-20">
-            <svg
-              height="800"
-              width="100%"
-              viewBox="0 0 1000 500"
-              preserveAspectRatio="xMidYMid meet"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-full h-auto z-50"
-            >
-              <animate attributeName="startOffset" from="100%" to="5%" dur="1.5s" fill="freeze" />
-              <path id="lineAC" d="M 0 220 l 1000 -180" stroke-width="2" fill="none" />
-
-              <text>
-                <textPath href="#lineAC" startOffset="8" fontSize={"5vw"} fontWeight={800}>
-                  Lose the 'Uhms...'
-                </textPath>
-              </text>
-
-              <path id="lineA" d="M 0 70 l 1000 360" stroke-width="2" fill="none" />
-
-              <text>
-                <textPath href="#lineA" startOffset="40%" fontSize={"3vw"} fontWeight={500}>
-                  And present like a pro
-                </textPath>
-              </text>
-            </svg>
-
-            <div className="absolute bottom-36 justify-center w-[30vw]">
-              <Cassette cassetteSpin={cassetteSpin} />
-            </div>
-
-            <div className="flex gap-6 absolute bottom-16 ">
-              <div
-                className={`flex flex-row items-center   ${
-                  isRecording ? "bg-blue-100" : "bg-blue-500  text-white"
-                }  w-fit rounded-full p-2 gap-4 border-2 border-blue-200`}
-              >
-                {isRecording && (
-                  <div className="flex gap-4 items-center">
-                    <Waveform recordingTime={recordingTime} />
-                    <span>{formatRecordingTime(recordingTime)}</span>
-                  </div>
-                )}
-                <button onClick={handleStartRecording} className="flex relative z-20">
-                  {isRecording ? (
-                    <div className="flex bg-blue-600 p-2.5 rounded-full gap-2">
-                      <div className="flex item-center justify-center">
-                        <span className="recording-icon bg-white w-4 h-4 rounded-full flex justify-center items-center [transform:translate(0px,2px)] "></span>
-                      </div>
-                      <p className=" w-full flex text-white font-semibold text-sm">
-                        Stop Recording
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="p-2 font-semibold">Click to start recording</p>
-                  )}
-                </button>
-
-                {microphoneError && <p style={{ color: "red" }}>{microphoneError}</p>}
-              </div>
-              <div className="upload-wrapper  relative">
-                <label className="sr-only">Upload file</label>
-                <input
-                  required
-                  onChange={(e) => handleFileUpload(e)}
-                  type="file"
-                  accept="audio/*, video/*"
-                  name="uploadfile"
-                  id="uploadfile"
-                  className=" absolute top-0 left-0 right-0 bottom-0 opacity-0 cursor-pointer"
-                />
-                <div className="uploadzone ">
-                  <div className="default border-2 p-2 rounded-full border-white bg-[#333]">
-                    <button type="button" className=" font-semibold p-2 text-white">
-                      Browse Files
-                    </button>
-                  </div>
-                  <div className="success text-buttongray text-sm  gap-4 flex flex-row bg-orange-100 items-center p-2 rounded-full ">
-                    <p className="text-orange-600 italic">{`${fileUpload?.name?.slice(
-                      0,
-                      14
-                    )}...`}</p>
-                    <button
-                      onClick={() => handleGetAnalysis(null)}
-                      className="p-3 z-20 cursor-pointer bg-orange-500 text-white font-semibold rounded-full"
-                    >
-                      Analyze upload
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-          <section className="w-1/3 h-auto absolute top-0 right-20 mt-6  ">
-            {recordings.length > 0 && (
-              <div
-                className="absolute inset-0 backdrop-blur rounded-2xl bg-slate-100/20 border border-slate-100/30"
-                aria-hidden="true"
-              ></div>
-            )}
-            {/* Recordings List */}
-            {recordings.length > 0 && (
-              <div className="h-full z-10  rounded-2xl p-6 text-black relative border border-slate-100">
-                <h3 className="mb-4">Your Recordings</h3>
-
-                <ul className="list-none h-[80vh] overflow-y-scroll flex flex-col gap-4 scroll-box">
-                  {recordings.map((rec, index) => (
-                    <li key={index} className="bg-white opacity-95 backdrop-blur p-4 rounded-2xl ">
-                      <div>
-                        <strong>Recording {recordings.length - index}</strong> -{" "}
-                        {formatTime(rec.timestamp)}
-                      </div>
-                      <div className="flex items-center gap-4 mt-4">
-                        <audio src={rec.audioDataUrl} controls />
-
-                        <div className="flex gap-4 text-sm">
-                          <button
-                            onClick={() => handleGetAnalysis(rec)}
-                            className=" bg-blue-50 px-4 py-2 rounded-full outline-2 outline-blue-400"
-                          >
-                            <p className="text-blue-600 font-semibold">Analyze</p>
-                          </button>
-                          <button>delete</button>
-                          <button>export</button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
         </section>
       </div>
     </section>

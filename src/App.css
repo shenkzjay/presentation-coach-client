@@ -169,11 +169,9 @@
 .slide-text {
   position: relative;
   display: inline-block;
-  width: 12rem;
+  width: 11rem;
   height: 3.3rem;
   overflow: hidden;
-
-  background-color: white;
 }
 
 .slide-text span {
